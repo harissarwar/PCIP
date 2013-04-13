@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+  xmlns:s="library://ns.adobe.com/flex/spark"
+  xmlns:mx="library://ns.adobe.com/flex/mx"
+  xmlns:vo="bytesol.pcip.vo.*"
+  width="250" height="185" 
+  title="Sign In"
+  close="onClose(event)"
+  creationComplete="onCreation(event)" 
+  >
+  <s:layout>
+    <s:VerticalLayout horizontalAlign="center"/>
+  </s:layout>
+  <fx:Script>
+  <![CDATA[
+    import bytesol.pcip.model.AppModel;
+    
+    import mx.controls.Alert;
+    import mx.events.CloseEvent;
+    import mx.events.FlexEvent;
+    import mx.managers.PopUpManager;
+    import mx.rpc.events.FaultEvent;
+    import mx.rpc.events.ResultEvent;
+    import mx.utils.StringUtil;
+    
+    [Bindable]
+    private var model:AppModel = AppModel.getInstance();
+    
+    protected function onCreation(event:FlexEvent):void
+    {
+      txtUser.setFocus();
+    }
+    
+    protected function onSubmit(event:Event):void
+    {
+      error.text = "";
+      model.saveSettings();
+      var data:String = StringUtil.substitute(
+        "LoginForm[username]={0}&LoginForm[password]={1}&LoginForm[rememberMe]={2}&yt0=Login", 
+        txtUser.text, txtPass.text, cb.selected ? 1 : 0);
+      
+      service.send(data);
+    }
+    
+    protected function onClose(event:CloseEvent):void
+    {
+      PopUpManager.removePopUp(this);
+    }
+    
+    protected function onSuccess(event:Event):void
+    {
+      try
+      {
+        var obj:Object = JSON.parse(service.response as String);
+        if(obj.hasOwnProperty("error") && obj.error == 0)
+        {
+          model.loggedUser = obj.name;
+          model.loggedUserType = obj.type;
+          PopUpManager.removePopUp(this);
+        }
+        else 
+          throw new Error("invalid credentials");
+      }
+      catch(err:Error)
+      {
+        error.text = "Invalid username or password.", "Login Error";
+        txtPass.setFocus();
+      }
+    }    
+    
+    protected function onFail(event:Event):void
+    {
+      error.text = "Unable to login to server.";      
+    }
+    
+    protected function onSubmitKeyDown(event:KeyboardEvent):void
+    {
+      if(event.keyCode == Keyboard.ENTER)
+        onSubmit(event);
+    }
+    
+  ]]>
+  </fx:Script>
+  <fx:Declarations>
+    <vo:MyHttpService id="service" url="{model.URL_LOGIN}" success="onSuccess(event)" fail="onFail(event)"/>
+  </fx:Declarations>
+  <s:Form id="loginForm" height="125">
+    <s:layout>
+      <s:FormLayout gap="0"/>
+    </s:layout>
+    <s:FormItem height="29" label="Username:">
+      <s:TextInput id="txtUser" text="{model.login}" change="model.login = txtUser.text;error.text =''" enter="txtPass.setFocus()" />
+    </s:FormItem>
+    <s:FormItem height="29" label="Password:">
+      <s:TextInput id="txtPass" change="error.text =''" displayAsPassword="true" enter="onSubmit(event)"/>
+    </s:FormItem>
+    <s:FormItem height="25">
+      <s:CheckBox id="cb" label="Remember Me" selected="{model.rememberMe}" click="{model.rememberMe = cb.selected;}"/>
+    </s:FormItem>
+    <s:FormItem height="28">
+      <s:Button id="btnLogin" label="Login"
+        enabled="{txtUser.text.length > 0 &amp;&amp; txtPass.text.length > 0}" 
+        click="onSubmit(event)"
+        keyDown="onSubmitKeyDown(event)"
+        />
+    </s:FormItem>
+  </s:Form>
+  <s:Label id="error" text="" color="red"/>
+</s:TitleWindow>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+  xmlns:s="library://ns.adobe.com/flex/spark"
+  xmlns:mx="library://ns.adobe.com/flex/mx"
+  xmlns:Flex="com.lorentz.SVG.Flex.*"
+  xmlns:components="bytesol.pcip.components.*"
+  xmlns:vo="bytesol.pcip.vo.*" 
+  minWidth="955" minHeight="600" 
+  pageTitle="Pakistan Constituency Information Platform"
+  creationComplete="onCreation(event)" 
+  applicationComplete="onAppComplete(event)"
+  > 
+  <s:layout>
+    <s:BasicLayout/>
+  </s:layout>
+  <fx:Script>
+  <![CDATA[
+    import bytesol.pcip.components.Find;
+    import bytesol.pcip.components.Login;
+    import bytesol.pcip.model.AppModel;
+    
+    import mx.controls.Alert;
+    import mx.events.FlexEvent;
+    import mx.events.MenuEvent;
+    import mx.managers.PopUpManager;
+    
+    [Bindable]
+    private var model:AppModel = AppModel.getInstance();
+        
+    protected function onCreation(event:FlexEvent):void
+    {
+    }
+    
+    protected function onAppComplete(event:FlexEvent):void
+    {
+      loginTest.send();
+    }
+
+    protected function onMenuItemClick(event:MenuEvent):void
+    {
+      if(event.label == "Log In")
+        PopUpManager.centerPopUp(PopUpManager.createPopUp(this, Login, true))
+      else if(event.label == "Log Out")
+        logout.send();
+      else if(event.label == "Refresh")
+      {
+        model.logOut();
+        loginTest.send();
+      }
+      else if(event.label == "Find")
+      {
+        PopUpManager.centerPopUp(PopUpManager.createPopUp(this, Find, true))
+      }
+    }
+    
+    protected function onSuccess(event:Event):void
+    {
+      if(event.target == logout)
+      {
+        if(logout.statusCode == 200)
+        {
+          model.logOut();
+        }
+        else
+          Alert.show("Unable to logout from server.", "Logout Error");
+      }
+      else if(event.target == loginTest)
+      {
+        if(loginTest.statusCode == 200)
+        {
+          var obj:Object = JSON.parse(loginTest.response as String);
+          if(obj.hasOwnProperty("error") && obj.error == 0)
+          {
+            model.loggedUser = obj.name;
+            model.loggedUserType = obj.type;
+          }
+        }
+      }
+    }    
+    
+    protected function onFail(title:String):void
+    {
+      Alert.show("Unable to connect to server.", title);      
+    }    
+    
+  ]]>
+  </fx:Script>
+  
+  <fx:Declarations>
+    <vo:MyHttpService id="logout" url="{model.URL_LOGOUT}" success="onSuccess(event)" fail="onFail('Logout Error')"/>
+    <vo:MyHttpService id="loginTest" url="{model.URL_LOGIN_TEST}" success="onSuccess(event)" fail="onFail('Login Error')"/>
+    <fx:XML id="logedOutXml" xmlns="">
+      <menu>
+        <menuItem label="File">
+          <menuItem id='login' label="Log In"/>
+          <menuItem label="Refresh"/>
+        </menuItem>
+        <menuItem label="Edit">
+          <menuItem label="Find"/>
+        </menuItem>
+        <menuItem label="Help">
+          <menuItem label="Help Contents"/>
+        </menuItem>
+      </menu>
+    </fx:XML>  
+    <fx:XML id="logedInXml" xmlns="">
+      <menu>
+        <menuItem label="File">
+          <menuItem id='login' label="Log Out"/>
+          <menuItem label="Refresh"/>
+        </menuItem>
+        <menuItem label="Edit">
+          <menuItem label="Find"/>
+        </menuItem>
+        <menuItem label="Help">
+          <menuItem label="Help Contents"/>
+        </menuItem>
+      </menu>
+    </fx:XML>  
+  </fx:Declarations>
+  <s:controlBarContent>
+      <mx:MenuBar id="menu" dataProvider="{model.loggedUser == '' ? logedOutXml : logedInXml}"
+        showRoot="false"
+        labelField="@label"
+        itemClick="onMenuItemClick(event)"
+        >
+      </mx:MenuBar>
+    <s:Spacer width="100%"/>
+    <s:Label text="{model.loggedUser}" fontSize="16" fontWeight="bold" height="25" paddingTop="5"/>
+  </s:controlBarContent>
+  <components:UserDataView id="view" top="10" left="10" width="380" bottom="10"/>
+  <components:Map left="{view.y + view.width + 10}" top="10" right="10"  bottom="10"/>
+</s:Application>

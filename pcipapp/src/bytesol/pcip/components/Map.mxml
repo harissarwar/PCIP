@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:BorderContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+  xmlns:s="library://ns.adobe.com/flex/spark" 
+  xmlns:mx="library://ns.adobe.com/flex/mx" width="400" height="300"
+  xmlns:Flex="com.lorentz.SVG.Flex.*"
+  xmlns:vo="bytesol.pcip.vo.*"
+  click="onSvgClick(event)"
+  borderColor="0x333333"
+  cornerRadius="5"
+  creationComplete="onCreation(event)"
+  >
+  <s:layout>
+    <s:BasicLayout/>
+  </s:layout>
+  <fx:Style>
+    @namespace s "library://ns.adobe.com/flex/spark";
+    @namespace mx "library://ns.adobe.com/flex/mx";
+    @namespace Flex "com.lorentz.SVG.Flex.*";
+    
+    @font-face 
+    { 
+      src: url("assets/Vera.ttf");
+      fontFamily: "Bitstream Vera Sans CFF";
+      fontStyle: normal;
+      fontWeight: normal;
+      embedAsCFF: true;
+      advancedAntiAliasing: true;
+    }
+  </fx:Style>  
+  <fx:Script>
+  <![CDATA[
+    import bytesol.pcip.events.ColorEvent;
+    import bytesol.pcip.model.AppModel;
+    import bytesol.pcip.vo.Zip;
+    
+    import com.lorentz.SVG.data.text.SVGTextToDraw;
+    import com.lorentz.SVG.display.SVGG;
+    import com.lorentz.SVG.display.SVGPath;
+    import com.lorentz.SVG.display.base.SVGContainer;
+    import com.lorentz.SVG.display.base.SVGElement;
+    import com.lorentz.SVG.events.SVGEvent;
+    import com.lorentz.SVG.text.FTESVGTextDrawer;
+    import com.lorentz.SVG.utils.DisplayUtils;
+    
+    import mx.binding.utils.ChangeWatcher;
+    import mx.controls.Alert;
+    import mx.events.FlexEvent;
+    import mx.utils.StringUtil;
+    
+    [Bindable]
+    private var model:AppModel = AppModel.getInstance();
+    private var naLayer:SVGG = null;
+    
+    protected function onCreation(event:FlexEvent):void
+    {
+      service.send("", URLLoaderDataFormat.BINARY);
+      addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown, true);
+      addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, true);    
+//      addEventListener(KeyboardEvent.KEY_DOWN,onKeyDown, true);
+      model.addEventListener(ColorEvent.COLOR, onUpdateColor);
+      ChangeWatcher.watch(model, "selLayer", onLayerChange);
+    }
+    
+    protected function onLayerChange(e:Event):void
+    {
+      for each(var path:SVGPath in model.seats)
+        path.transform.colorTransform = new ColorTransform();
+    }
+    
+    protected function onUpdateColor(e:ColorEvent):void
+    {
+      trace("UpdateColor", e.color, e.seat);
+      for each(var path:SVGPath in model.seats)
+      {
+        if(model.getSeatName(path) == e.seat)
+        {
+          var ct:ColorTransform = new ColorTransform();
+          if(e.color.length > 0)
+            ct.color = uint("0x" + e.color);
+          path.transform.colorTransform = ct;
+          if(path == model.selElement)
+            model.selColor = (e.color.length > 0) ? ct.color : model.DEFAULT_COLOR;
+        }
+      }
+    }
+    
+    protected function onMouseWheel(event:MouseEvent):void
+    {
+      var point:Point = group.globalToLocal(new Point(event.stageX, event.stageY));
+      group.transformX = point.x;
+      group.transformY = point.y;
+      if(event.delta > 0)
+        model.zoom += 0.1;
+      else
+        model.zoom -= 0.1;
+    }
+
+//    [Bindable]
+//    public function get selElement():SVGElement 
+//    {
+//      return model.selElement;
+//    }    
+//    
+//    public function set selElement(value:SVGElement):void 
+//    {
+//      if(model.selElement)
+//        model.selElement.transform.colorTransform = new ColorTransform();
+//      model.selElement.alpha = .5;     
+//      model.selElement = value;
+//      
+//      if(model.selElement)
+//        model.selElement.transform.colorTransform = new ColorTransform(1, 1, 1, 1, 0x66, 0x66, 0x66);
+//    }
+    
+    protected function onSvgClick(e:MouseEvent):void
+    {
+      if(sLoc != null) return;
+      var ele:SVGElement = DisplayUtils.getSVGElement(e.target as DisplayObject);
+      if(ele && ele is SVGPath)
+      {
+        var path:SVGPath = ele as SVGPath;
+        if(model.selElement == path)
+          model.selElement = null;
+        else
+          model.selElement = path;
+      }
+    }
+    
+    protected function onSvgRender(e:SVGEvent):void
+    {
+      var s:com.lorentz.SVG.display.SVG = svg.svgDocument.getElementAt(0) as com.lorentz.SVG.display.SVG;
+//      dumpSvgGraph(s as SVGContainer, 0);
+      trace("Map Layers", model.mapLayers.length);
+      trace("Seats", model.seats.length);
+    }
+    
+    protected function dumpSvgGraph(cont:SVGContainer, level:int):void
+    {
+      if(cont == null) return;
+      trace(StringUtil.repeat("-", level) + cont.id, cont.name, cont.type, cont.numElements);
+      for (var i:int = 0; i < cont.numElements; i++)
+      {
+        var ele:SVGElement = cont.getElementAt(i);
+        if(ele is SVGContainer)  
+          dumpSvgGraph(ele as SVGContainer, level+1);
+        else
+          trace(StringUtil.repeat("-", level+1) + ele.id, ele.name, ele.type);
+      }
+    }
+    
+    protected function onSvgElementMouseOver(e:MouseEvent):void
+    {
+      var element:SVGElement = DisplayUtils.getSVGElement(e.target as DisplayObject);
+      if(element && element is SVGPath && element != model.selElement)
+        element.alpha = model.OVER_ALPHA;
+//        element.transform.colorTransform = new ColorTransform(1, 1, 1, 1, 0x66, 0x66, 0x66);
+    }
+    
+    protected function onSvgElementMouseOut(e:MouseEvent):void
+    {
+      var element:SVGElement = DisplayUtils.getSVGElement(e.target as DisplayObject);
+      if(element && element is SVGPath && element != model.selElement)
+        element.alpha = 1.0;          
+    }
+    
+    protected function onSvgElementAdd(event:SVGEvent):void
+    {
+      if(event.element is SVGG)
+      {
+        model.mapLayers.push(event.element as SVGG);
+        if(event.element.id == model.LAYER_REGIONS)
+        {
+          naLayer = event.element as SVGG;          
+        }
+        else
+        {
+          event.element.mouseChildren = false;
+          event.element.mouseEnabled = false;
+        }
+      }
+      else if(event.element is SVGPath)
+      {
+        var path:SVGPath = event.element as SVGPath;
+        var parent:SVGG = path.parentElement as SVGG; 
+        if(parent && parent.id == model.LAYER_REGIONS)
+          model.seats.push(path);
+      }
+      
+    }
+    protected function textDrawingInterceptor(textFormat:SVGTextToDraw):void 
+    {
+      textFormat.fontFamily = "Bitstream Vera Sans CFF";
+    }	    
+    
+    private var sLoc:Point = null;
+    private var sScroll:Point = null;
+    protected function onMouseDown(event:MouseEvent):void
+    {
+      sLoc = new Point(event.stageX, event.stageY);
+      if(svg.width < group.width)
+        return;
+      stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+      stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp, true);
+      sScroll = new Point(group.horizontalScrollPosition, group.verticalScrollPosition);
+//      trace("down", group.horizontalScrollPosition, group.verticalScrollPosition, svg.width, svg.height, group.contentWidth, group.contentHeight, group.width, group.height);
+    }
+    
+    protected function onMouseMove(event:MouseEvent):void
+    {
+      Mouse.cursor = MouseCursor.HAND;
+      var cLoc:Point = new Point(event.stageX, event.stageY);
+      var scrollx:int = 0;
+      var scrolly:int = 0;
+      var xMax:int = (svg.width - group.width);
+      var yMax:int = (svg.height - group.height);
+//      var xMax:int = (svg.width - group.contentWidth);
+//      var yMax:int = (svg.height - group.contentHeight);
+      if (cLoc.x < sLoc.x)
+        scrollx = sScroll.x - (cLoc.x - sLoc.x);
+      else
+        scrollx = sScroll.x + (sLoc.x - cLoc.x);
+      if (cLoc.y < sLoc.y)
+        scrolly = sScroll.y - (cLoc.y - sLoc.y);
+      else
+        scrolly = sScroll.y + (sLoc.y - cLoc.y);
+      
+      if(scrollx < -1*xMax)
+        group.horizontalScrollPosition = -1*xMax;
+//      if(scrollx < 0)
+//        group.horizontalScrollPosition = 0;
+      else if(scrollx > xMax) 
+        group.horizontalScrollPosition = xMax;
+      else
+        group.horizontalScrollPosition = scrollx;
+      if(scrolly < -1*yMax)
+        group.verticalScrollPosition = -1*yMax;
+//      if(scrolly < 0)
+//        group.verticalScrollPosition = 0;
+      else if(scrolly > yMax) 
+        group.verticalScrollPosition = yMax;
+      else
+        group.verticalScrollPosition = scrolly;
+//      trace(cLoc, sLoc, group.horizontalScrollPosition, group.verticalScrollPosition, svg.width, svg.height, group.contentWidth, group.contentHeight, group.width, group.height, xMax, yMax);
+    }
+    
+    protected function onMouseUp(event:MouseEvent):void
+    {
+      stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+      stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+      Mouse.cursor = MouseCursor.AUTO;
+      if(sLoc && event.stageX == sLoc.x && event.stageY == sLoc.y)
+      {
+        sLoc = null;
+        sScroll = null;
+      }
+      //trace("up", group.horizontalScrollPosition, group.verticalScrollPosition, svg.width, svg.height, group.contentWidth, group.contentHeight, group.width, group.height);
+    }
+    
+    protected function onMapSuccess(event:Event):void
+    {
+      try
+      {
+        var ba:ByteArray = service.response as ByteArray;
+        if(service.url == model.URL_MAP_ZLIB)
+          ba.inflate();
+        svg.source = ba.readMultiByte(ba.length, 'ascii');
+      }
+      catch(err:Error)
+      {
+        trace(err.message);
+        Alert.show("Unable to load map from the server.", "Map Error");
+      }
+    }    
+    
+    protected function onMapFail(event:Event):void
+    {
+      Alert.show("Unable to load map from the server.", "Map Error");
+    }
+    
+    protected function onSave(event:MouseEvent):void
+    {
+      var ba:ByteArray = service.response as ByteArray;
+      ba.deflate();
+      var fileRef:FileReference = new FileReference();
+      fileRef.save(ba, "map.zlib");      
+    }
+    
+//    protected function onKeyDown(event:KeyboardEvent):void
+//    {
+//      if(event.charCode == Keyboard.UP)
+//        group.verticalScrollPosition += 20;
+//    }
+    
+  ]]>
+  </fx:Script>
+  <fx:Declarations>
+    <vo:MyHttpService id="service" url="{model.URL_MAP_ZLIB}" success="onMapSuccess(event)" fail="onMapFail(event)"/>
+  </fx:Declarations>
+    <s:Group id="group" left="5" top="5" right="5" bottom="5"    
+    clipAndEnableScrolling="true"
+    scaleX="{model.zoom}"
+    scaleY="{model.zoom}"
+    transformX="{int(group.width/2)}"
+    transformY="{int(group.height/2)}"    
+    >      
+    <s:layout>
+      <s:BasicLayout/>
+    </s:layout>
+    <Flex:SVG id="svg" horizontalCenter="0" verticalCenter="0"
+      elementAdded="onSvgElementAdd(event)"
+      rendered="onSvgRender(event)"
+      mouseOver="onSvgElementMouseOver(event)"
+      mouseOut="onSvgElementMouseOut(event)"
+      useEmbeddedFonts="true"
+      textDrawer="{new FTESVGTextDrawer}"
+      textDrawingInterceptor="{textDrawingInterceptor}"
+      />
+  </s:Group>
+  <s:BorderContainer right="5" top="5" width="60" height="26"
+    backgroundAlpha=".5"
+    backgroundColor="black" 
+    borderColor="black" cornerRadius="5"
+    toolTip="Zoom"
+    >
+    <s:layout>
+      <s:BasicLayout/>
+    </s:layout>
+    <s:Label id="lblZoom" horizontalCenter="0" verticalCenter="0"  text="{(model.zoom*100).toFixed() + '%'}" fontSize="16" fontWeight="bold" color="white"/>    
+  </s:BorderContainer>
+  <s:Button left="5" top="5" label="save" click="onSave(event)" 
+    visible="{service.url == model.URL_MAP}"
+    includeInLayout="{service.url == model.URL_MAP}"
+    />
+  <!--  
+  <s:Scroller id="scroller" left="5" top="5" right="5" bottom="5">
+    <s:Group id="group" width="100%" height="100%"
+      mouseDown="onMouseDown(event)"
+      >      
+      <Flex:SVG id="svg"  
+        source="{model.URL_MAP}"
+        elementAdded="onSvgElementAdd(event)"
+        rendered="onSvgRender(event)"
+        mouseOver="onSvgElementMouseOver(event)"
+        mouseOut="onSvgElementMouseOut(event)"
+        useEmbeddedFonts="true"
+        textDrawer="{new FTESVGTextDrawer}"
+        textDrawingInterceptor="{textDrawingInterceptor}"
+        />
+    </s:Group>
+  </s:Scroller>
+  -->
+</s:BorderContainer>

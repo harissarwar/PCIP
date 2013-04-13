@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+  xmlns:s="library://ns.adobe.com/flex/spark"
+  xmlns:mx="library://ns.adobe.com/flex/mx"
+  width="242" height="116" 
+  title="Find"
+  creationComplete="onCreation(event)"
+  close="onClose(event)"
+  >
+  <s:layout>
+    <s:BasicLayout/>
+  </s:layout>
+  
+  <fx:Script>
+  <![CDATA[
+    import bytesol.pcip.model.AppModel;
+    
+    import com.lorentz.SVG.display.base.SVGElement;
+    
+    import mx.events.CloseEvent;
+    import mx.events.FlexEvent;
+    import mx.managers.PopUpManager;
+    private var model:AppModel = AppModel.getInstance();
+    
+    protected function onFind(event:Event):void
+    {
+      for each(var seat:SVGElement in model.seats)
+      {
+        if(model.getSeatName(seat) == txt.text)
+        {
+          model.selElement = seat;
+          onClose(null);
+          return;
+        }
+      }
+      txt.errorString = "Invalid Seat";
+    }
+    
+    protected function onClose(event:CloseEvent):void
+    {
+      PopUpManager.removePopUp(this);      
+    }
+    
+    protected function onCreation(event:FlexEvent):void
+    {
+      txt.setFocus();      
+    }
+    
+  ]]>
+  </fx:Script>
+  
+  <fx:Declarations>
+    <!-- Place non-visual elements (e.g., services, value objects) here -->
+  </fx:Declarations>
+  <s:Label x="24" y="16" fontSize="14" fontWeight="normal" text="Seat :"/>
+  <s:TextInput id="txt" x="69" y="10" change="txt.errorString = ''" enter="onFind(event)"/>
+  <s:Button x="69" y="40" width="80" height="28" label="Find" click="onFind(event)"/>
+</s:TitleWindow>
