@@ -4,17 +4,17 @@ This platform provides an opertunity to gather data, in the form of tag value pa
 
 ## INSTALLATION
 
-1. Creating Database
+1. Creating Database   
 Create a mysql database 'pcip'. Import tables in the database using the schema from the following path 
 
   pcip/protected/data/pcip.sql
 
-2. Configuring Database Connection
+2. Configuring Database Connection   
 You can configure the database name, username, password in 
 
   pcip/protected/config/main.php
 
-3. Deployment To Web Server
+3. Deployment To Web Server   
 Host all files in the pcip folder to any web server.    
 
 ## REQUIREMENTS
@@ -27,7 +27,7 @@ Client side requires a web browser with Flash Player 11.0 or greater.
 
 ## QUICK START
 
-1. Creating Users
+1. Creating Users   
 Use the following url to manage users, only admin user can access this url.     
 
   http://hostname/service.php/User
@@ -39,7 +39,7 @@ Use the following url to manage layers and tags, only admin user can access this
 
   http://hostname/service.php/Layer
 
-3. Adding Data
+3. Adding Data   
    
 Use the following url to open the front end application to enter data against tags. 
 
