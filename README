@@ -1,6 +1,6 @@
- # Pakistan Constituency Information Platform
+# Pakistan Constituency Information Platform
 
-This platform provides an opertunity to gather data, in the form of tag value pairs, related to the constituency of pakistan. 
+This platform provides an opertunity to gather data, in the form of tag value pairs, related to the constituency of Pakistan. 
 
 ## INSTALLATION
 
@@ -48,7 +48,7 @@ Use the following url to open the front end application to enter data against ta
 * Goto File->Log In to login to the platform.
 * Select Layer for which you want to add data.
 * Select Seat from the map on right
-* Selct Tag
+* Select Tag
 * Enter Value and press enter
 
 ## DEVELOPMENT GUIDE
@@ -63,14 +63,13 @@ Layer4 contains the gray areas used to outline the zoomed constituencies. 'Inksc
 was used to create all the svg images.
 
 'pcip' contains the complete server side code for hosting and managing database. 
-It providesv a jason response to queries generated from flash. It also contains 
+It provides a jason response to queries generated from flash. It also contains 
 the eclipse project so you can just import it in eclipse.
 
 'pcipapp' is a flash builder project. Flex framework 4.5.0 was used to build the 
 flash output. SVG images are not supported by default in flash. An as3 svg renderer
 was used from the following link (https://github.com/LucasLorentz/AS3SVGRenderer)
 Their licence can be found in 'pcipapp/src/libs'. 
-
 
 ## LICENSE
 
