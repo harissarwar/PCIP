@@ -1,62 +1,57 @@
-Pakistan Constituency Information Platform
-==========================================
+ # Pakistan Constituency Information Platform
 
 This platform provides an opertunity to gather data, in the form of tag value pairs, related to the constituency of pakistan. 
 
-INSTALLATION
-------------
+## INSTALLATION
 
 1. Creating Database
 Create a mysql database 'pcip'. Import tables in the database using the schema from the following path 
-```AS3
-	pcip/protected/data/pcip.sql
-```AS3
+
+  pcip/protected/data/pcip.sql
+
 2. Configuring Database Connection
 You can configure the database name, username, password in 
-```AS3
-	pcip/protected/config/main.php
-```AS3
+
+  pcip/protected/config/main.php
+
 3. Deployment To Web Server
 Host all files in the pcip folder to any web server.    
 
-REQUIREMENTS
-------------
+## REQUIREMENTS
 
 Hosting site requires mysql database and php. Backend is based on the Yii 1.1.13 framework and its requirments can be checked by opening the following path
-```AS3
-	http://hostname/yii/requirements/index.php
-```AS3
+
+  http://hostname/yii/requirements/index.php
+
 Client side requires a web browser with Flash Player 11.0 or greater.
 
-QUICK START
------------
+## QUICK START
 
 1. Creating Users
 Use the following url to manage users, only admin user can access this url.     
-```AS3
-	http://hostname/service.php/User
-```AS3
+
+  http://hostname/service.php/User
+
 NOTE: In order to create a readonly user set its type to 'demo'.
 
 2. Creating Layers and Tags   
 Use the following url to manage layers and tags, only admin user can access this url.
-```AS3
-	http://hostname/service.php/Layer
-```AS3
+
+  http://hostname/service.php/Layer
+
 3. Adding Data
    
 Use the following url to open the front end application to enter data against tags. 
-```AS3
-	http://hostname/
-```AS3
+
+  http://hostname/
+
 * Goto File->Log In to login to the platform.
 * Select Layer for which you want to add data.
 * Select Seat from the map on right
 * Selct Tag
 * Enter Value and press enter
 
-DEVELOPMENT GUIDE
------------------
+## DEVELOPMENT GUIDE
 
 Source of this project contains three folders map, pcip and pcipapp. 
 
@@ -77,7 +72,7 @@ was used from the following link (https://github.com/LucasLorentz/AS3SVGRenderer
 Their licence can be found in 'pcipapp/src/libs'. 
 
 
-LICENSE
-==============
+## LICENSE
+
 Licensed under the MIT License.  
 http://opensource.org/licenses/mit-license.php
